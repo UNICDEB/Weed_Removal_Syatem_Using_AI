@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AI RealSense Detection Dashboard</title>
-
+    <title>AI RealSense Detection System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         body {
-            background-color: #f4f6f9;
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            color: white;
         }
 
         .card {
+            background-color: rgba(0,0,0,0.6);
             border-radius: 15px;
         }
 
@@ -18,25 +19,16 @@
             display: none;
         }
 
-        #confidenceValue {
-            font-weight: bold;
-            color: #0d6efd;
-        }
-
-        .result-box {
-            background-color: #ffffff;
-            padding: 15px;
+        #resultImage {
             border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 3px solid white;
         }
 
-        footer {
-            background-color: #0d6efd;
-            color: white;
+        .value-box {
+            background: rgba(255,255,255,0.1);
             padding: 10px;
-            margin-top: 30px;
-            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -45,9 +37,9 @@
 
 <div class="container mt-4">
 
-    <h2 class="text-center mb-4">Weed Detection System</h2>
+    <h2 class="text-center mb-4">RealSense AI Object Detection Dashboard</h2>
 
-    <div class="card p-4 shadow">
+    <div class="card p-4">
 
         <div class="row mb-3">
 
@@ -71,47 +63,27 @@
 
         <div class="row mb-3">
             <div class="col-md-12">
-                <label>
-                    Confidence Threshold:
-                    <span id="confidenceValue">0.5</span>
-                </label>
-
-                <input type="range"
-                       min="0.1"
-                       max="1.0"
-                       step="0.05"
-                       value="0.5"
-                       id="conf"
-                       class="form-range"
-                       oninput="updateConfidence(this.value)">
+                <label>Confidence Threshold</label>
+                <input type="range" min="0.1" max="1.0" step="0.05"
+                 id="conf" class="form-range" value="0.5">
             </div>
         </div>
 
         <div class="text-center mb-3">
-            <div id="loadingSpinner" class="spinner-border text-primary"></div>
-            <div id="loadingText" class="text-primary fw-bold">Processing...</div>
+            <div id="loadingSpinner" class="spinner-border text-light" role="status"></div>
+            <div id="loadingText">Processing...</div>
         </div>
 
         <div class="text-center mb-4">
-            <img id="resultImage" width="750" class="img-fluid">
+            <img id="resultImage" width="700">
         </div>
 
         <div id="resultData"></div>
 
     </div>
-
 </div>
 
-<footer>
-    Developed By: Debabrata Doloi |
-    C-DAC, Kolkata
-</footer>
-
 <script>
-
-function updateConfidence(val){
-    document.getElementById("confidenceValue").innerText = val;
-}
 
 function openCamera(){
     fetch("/open_camera", {method:"POST"});
@@ -131,29 +103,21 @@ function startProcess(){
         document.getElementById("loadingSpinner").style.display = "none";
         document.getElementById("loadingText").style.display = "none";
 
-        document.getElementById("resultImage").src =
-            data.image + "?t=" + new Date().getTime();
+        document.getElementById("resultImage").src = data.image + "?t=" + new Date().getTime();
 
         let html = "";
 
         data.detections.forEach((det, index)=>{
 
             html += `
-            <div class="result-box">
+            <div class="value-box">
+                <h5>Detection ${index+1}</h5>
 
-                <h5 class="text-primary">Detection ${index+1}</h5>
-
-                <b>Bounding Box Pixel:</b><br>
-                Starting Pixel: ${det.bbox_pixel.starting_pixel}<br>
-                Ending Pixel: ${det.bbox_pixel.ending_pixel}<br><br>
-
-                <b>Bounding Box Coordinate (cm):</b><br>
-                Starting Coordinate: ${det.bbox_coordinate_cm.starting_coordinate}<br>
-                Ending Coordinate: ${det.bbox_coordinate_cm.ending_coordinate}<br><br>
+                <b>Bounding Box Pixel:</b> ${det.bbox_pixel}<br>
+                <b>Bounding Box Coordinate (cm):</b> ${det.bbox_coordinate_cm}<br><br>
 
                 <b>Center Pixel:</b> ${det.center_pixel}<br>
                 <b>Center Coordinate (cm):</b> ${det.center_coordinate_cm}
-
             </div>
             `;
         });

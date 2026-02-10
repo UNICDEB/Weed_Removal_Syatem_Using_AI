@@ -65,42 +65,60 @@ def open_camera():
 @app.post("/start_process")
 def start_process(conf: float = 0.5):
 
-    global latest_result
-
     color, depth_image, depth_frame = camera.get_aligned_frames()
 
     annotated, boxes = detector.detect(color, conf)
 
-    formatted_results = []
+    detection_results = []
+    bbox_coordinate_list = []   # [[sx,sy,sz,ex,ey,ez],...]
 
     for box in boxes:
+
         x1, y1, x2, y2, conf_score, cls = box
 
+        # -------- STARTING PIXEL -> 3D ----------
+        start_depth, start_3d = pixel_to_3d(
+            depth_frame,
+            camera.intrinsics,
+            x1, y1
+        )
+
+        # -------- ENDING PIXEL -> 3D ----------
+        end_depth, end_3d = pixel_to_3d(
+            depth_frame,
+            camera.intrinsics,
+            x2, y2
+        )
+
+        # Convert meter to cm
+        start_3d_cm = [round(i * 100, 2) for i in start_3d]
+        end_3d_cm = [round(i * 100, 2) for i in end_3d]
+
+        bbox_coordinate_list.append(
+            start_3d_cm + end_3d_cm
+        )
+
+        # -------- CENTER ----------
         cx = int((x1 + x2) / 2)
         cy = int((y1 + y2) / 2)
 
-        # Center depth
         center_depth, center_3d = pixel_to_3d(
             depth_frame,
             camera.intrinsics,
             cx, cy
         )
 
-        # Convert meter to cm
         center_3d_cm = [round(i * 100, 2) for i in center_3d]
 
-        # Bounding box corners 3D
-        bbox_depth, bbox_3d = pixel_to_3d(
-            depth_frame,
-            camera.intrinsics,
-            x1, y1
-        )
-
-        bbox_3d_cm = [round(i * 100, 2) for i in bbox_3d]
-
-        formatted_results.append({
-            "bbox_pixel": [x1, y1, x2, y2],
-            "bbox_coordinate_cm": bbox_3d_cm,
+        detection_results.append({
+            "bbox_pixel": {
+                "starting_pixel": [x1, y1],
+                "ending_pixel": [x2, y2]
+            },
+            "bbox_coordinate_cm": {
+                "starting_coordinate": start_3d_cm,
+                "ending_coordinate": end_3d_cm
+            },
             "center_pixel": [cx, cy],
             "center_coordinate_cm": center_3d_cm
         })
@@ -109,12 +127,11 @@ def start_process(conf: float = 0.5):
     filename = f"{SAVE_FOLDER}/result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
     cv2.imwrite(filename, annotated)
 
-    latest_result = {
+    return {
         "image": filename,
-        "detections": formatted_results
+        "detections": detection_results,
+        "bbox_coordinate_list": bbox_coordinate_list
     }
-
-    return latest_result
 
 
 

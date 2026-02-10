@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RealSense AI System</title>
+    <link rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+
+<body class="bg-dark text-white">
+
+<div class="container mt-4">
+
+    <h2 class="text-center">RealSense Object Detection System</h2>
+
+    <div class="row mt-4">
+
+        <div class="col-md-4">
+            <button class="btn btn-success w-100" onclick="openCamera()">Open Camera</button>
+        </div>
+
+        <div class="col-md-4">
+            <button class="btn btn-primary w-100" onclick="startProcess()">Start</button>
+        </div>
+
+        <div class="col-md-4">
+            <button class="btn btn-danger w-100" onclick="exitApp()">Exit</button>
+        </div>
+
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <button class="btn btn-warning w-100" onclick="clearData()">Clear</button>
+        </div>
+
+        <div class="col-md-6">
+            <input type="range" min="0.1" max="1.0" step="0.1"
+             id="conf" class="form-range" value="0.5">
+            <label>Confidence</label>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <img id="resultImage" width="600">
+    </div>
+
+    <pre id="resultText"></pre>
+
+</div>
+
+<script>
+function openCamera(){
+    fetch("/open_camera", {method:"POST"});
+}
+
+function startProcess(){
+    let conf = document.getElementById("conf").value;
+
+    fetch("/start_process?conf="+conf, {method:"POST"})
+    .then(res=>res.json())
+    .then(data=>{
+        document.getElementById("resultImage").src = data.image;
+        document.getElementById("resultText").innerText =
+        JSON.stringify(data, null, 2);
+    });
+}
+
+function clearData(){
+    fetch("/clear", {method:"POST"});
+    document.getElementById("resultImage").src="";
+    document.getElementById("resultText").innerText="";
+}
+
+function exitApp(){
+    fetch("/exit", {method:"POST"});
+}
+</script>
+
+</body>
+</html>

@@ -1,79 +1,142 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>RealSense AI System</title>
-    <link rel="stylesheet"
-     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <title>AI RealSense Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            color: white;
+        }
+
+        .card {
+            background-color: rgba(0,0,0,0.6);
+            border-radius: 15px;
+        }
+
+        #loadingSpinner {
+            display: none;
+        }
+
+        #resultImage {
+            border-radius: 10px;
+            border: 3px solid white;
+        }
+
+        .value-box {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 
-<body class="bg-dark text-white">
+<body>
 
 <div class="container mt-4">
 
-    <h2 class="text-center">RealSense Object Detection System</h2>
+    <h2 class="text-center mb-4">RealSense AI Object Detection Dashboard</h2>
 
-    <div class="row mt-4">
+    <div class="card p-4">
 
-        <div class="col-md-4">
-            <button class="btn btn-success w-100" onclick="openCamera()">Open Camera</button>
+        <div class="row mb-3">
+
+            <div class="col-md-3">
+                <button class="btn btn-success w-100" onclick="openCamera()">Open Camera</button>
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="startProcess()">Start</button>
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-warning w-100" onclick="clearData()">Clear</button>
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-danger w-100" onclick="exitApp()">Exit</button>
+            </div>
+
         </div>
 
-        <div class="col-md-4">
-            <button class="btn btn-primary w-100" onclick="startProcess()">Start</button>
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <label>Confidence Threshold</label>
+                <input type="range" min="0.1" max="1.0" step="0.05"
+                 id="conf" class="form-range" value="0.5">
+            </div>
         </div>
 
-        <div class="col-md-4">
-            <button class="btn btn-danger w-100" onclick="exitApp()">Exit</button>
+        <div class="text-center mb-3">
+            <div id="loadingSpinner" class="spinner-border text-light" role="status"></div>
+            <div id="loadingText">Processing...</div>
         </div>
+
+        <div class="text-center mb-4">
+            <img id="resultImage" width="700">
+        </div>
+
+        <div id="resultData"></div>
 
     </div>
-
-    <div class="row mt-3">
-        <div class="col-md-6">
-            <button class="btn btn-warning w-100" onclick="clearData()">Clear</button>
-        </div>
-
-        <div class="col-md-6">
-            <input type="range" min="0.1" max="1.0" step="0.1"
-             id="conf" class="form-range" value="0.5">
-            <label>Confidence</label>
-        </div>
-    </div>
-
-    <div class="mt-4 text-center">
-        <img id="resultImage" width="600">
-    </div>
-
-    <pre id="resultText"></pre>
-
 </div>
 
 <script>
+
 function openCamera(){
     fetch("/open_camera", {method:"POST"});
 }
 
 function startProcess(){
+
+    document.getElementById("loadingSpinner").style.display = "inline-block";
+    document.getElementById("loadingText").style.display = "block";
+
     let conf = document.getElementById("conf").value;
 
     fetch("/start_process?conf="+conf, {method:"POST"})
     .then(res=>res.json())
     .then(data=>{
-        document.getElementById("resultImage").src = data.image;
-        document.getElementById("resultText").innerText =
-        JSON.stringify(data, null, 2);
+
+        document.getElementById("loadingSpinner").style.display = "none";
+        document.getElementById("loadingText").style.display = "none";
+
+        document.getElementById("resultImage").src = data.image + "?t=" + new Date().getTime();
+
+        let html = "";
+
+        data.detections.forEach((det, index)=>{
+
+            html += `
+            <div class="value-box">
+                <h5>Detection ${index+1}</h5>
+
+                <b>Bounding Box Pixel:</b> ${det.bbox_pixel}<br>
+                <b>Bounding Box Coordinate (cm):</b> ${det.bbox_coordinate_cm}<br><br>
+
+                <b>Center Pixel:</b> ${det.center_pixel}<br>
+                <b>Center Coordinate (cm):</b> ${det.center_coordinate_cm}
+            </div>
+            `;
+        });
+
+        document.getElementById("resultData").innerHTML = html;
+
     });
 }
 
 function clearData(){
     fetch("/clear", {method:"POST"});
     document.getElementById("resultImage").src="";
-    document.getElementById("resultText").innerText="";
+    document.getElementById("resultData").innerHTML="";
 }
 
 function exitApp(){
     fetch("/exit", {method:"POST"});
 }
+
 </script>
 
 </body>

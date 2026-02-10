@@ -67,40 +67,55 @@ def start_process(conf: float = 0.5):
 
     global latest_result
 
-    color, depth, depth_frame = camera.get_aligned_frames()
+    color, depth_image, depth_frame = camera.get_aligned_frames()
 
     annotated, boxes = detector.detect(color, conf)
 
-    bbox_list = []
-    center_list = []
+    formatted_results = []
 
     for box in boxes:
-        x1,y1,x2,y2,conf_score,cls = box
+        x1, y1, x2, y2, conf_score, cls = box
 
-        cx = int((x1+x2)/2)
-        cy = int((y1+y2)/2)
+        cx = int((x1 + x2) / 2)
+        cy = int((y1 + y2) / 2)
 
-        depth_val, coord3d = pixel_to_3d(depth_frame,
-                                         camera.intrinsics,
-                                         cx, cy)
+        # Center depth
+        center_depth, center_3d = pixel_to_3d(
+            depth_frame,
+            camera.intrinsics,
+            cx, cy
+        )
 
-        bbox_list.append([x1,y1,x2,y2])
-        center_list.append([cx,cy,depth_val])
+        # Convert meter to cm
+        center_3d_cm = [round(i * 100, 2) for i in center_3d]
+
+        # Bounding box corners 3D
+        bbox_depth, bbox_3d = pixel_to_3d(
+            depth_frame,
+            camera.intrinsics,
+            x1, y1
+        )
+
+        bbox_3d_cm = [round(i * 100, 2) for i in bbox_3d]
+
+        formatted_results.append({
+            "bbox_pixel": [x1, y1, x2, y2],
+            "bbox_coordinate_cm": bbox_3d_cm,
+            "center_pixel": [cx, cy],
+            "center_coordinate_cm": center_3d_cm
+        })
 
     # Save image
     filename = f"{SAVE_FOLDER}/result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
     cv2.imwrite(filename, annotated)
 
-    # Send to remote
-    send_to_remote(REMOTE_DEVICE_URL, bbox_list, center_list)
-
     latest_result = {
         "image": filename,
-        "bounding_boxes": bbox_list,
-        "center_points": center_list
+        "detections": formatted_results
     }
 
     return latest_result
+
 
 
 @app.post("/clear")

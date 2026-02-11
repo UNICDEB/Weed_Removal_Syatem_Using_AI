@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% comment %} <!DOCTYPE html>
 <html>
 <head>
     <title>AI RealSense Detection System</title>
@@ -118,6 +118,189 @@ function startProcess(){
 
                 <b>Center Pixel:</b> ${det.center_pixel}<br>
                 <b>Center Coordinate (cm):</b> ${det.center_coordinate_cm}
+            </div>
+            `;
+        });
+
+        document.getElementById("resultData").innerHTML = html;
+
+    });
+}
+
+function clearData(){
+    fetch("/clear", {method:"POST"});
+    document.getElementById("resultImage").src="";
+    document.getElementById("resultData").innerHTML="";
+}
+
+function exitApp(){
+    fetch("/exit", {method:"POST"});
+}
+
+</script>
+
+</body>
+</html> {% endcomment %}
+
+############
+Date: 11.02.2026
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weed Detection Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+
+        .card {
+            border-radius: 15px;
+        }
+
+        #loadingSpinner {
+            display: none;
+        }
+
+        #confidenceValue {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+
+        .result-box {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        footer {
+            background-color: #0d6efd;
+            color: white;
+            padding: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+    <h2 class="text-center mb-4">Weed Detection System</h2>
+
+    <div class="card p-4 shadow">
+
+        <div class="row mb-3">
+
+            <div class="col-md-3">
+                <button class="btn btn-success w-100" onclick="openCamera()">Open Camera</button>
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="startProcess()">Start</button>
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-warning w-100" onclick="clearData()">Clear</button>
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-danger w-100" onclick="exitApp()">Exit</button>
+            </div>
+
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <label>
+                    Confidence Threshold:
+                    <span id="confidenceValue">0.5</span>
+                </label>
+
+                <input type="range"
+                       min="0.1"
+                       max="1.0"
+                       step="0.05"
+                       value="0.5"
+                       id="conf"
+                       class="form-range"
+                       oninput="updateConfidence(this.value)">
+            </div>
+        </div>
+
+        <div class="text-center mb-3">
+            <div id="loadingSpinner" class="spinner-border text-primary"></div>
+            <div id="loadingText" class="text-primary fw-bold">Processing...</div>
+        </div>
+
+        <div class="text-center mb-4">
+            <img id="resultImage" width="750" class="img-fluid">
+        </div>
+
+        <div id="resultData"></div>
+
+    </div>
+
+</div>
+
+<footer>
+    Developed By: Debabrata Doloi |
+    C-DAC, Kolkata
+</footer>
+
+<script>
+
+function updateConfidence(val){
+    document.getElementById("confidenceValue").innerText = val;
+}
+
+function openCamera(){
+    fetch("/open_camera", {method:"POST"});
+}
+
+function startProcess(){
+
+    document.getElementById("loadingSpinner").style.display = "inline-block";
+    document.getElementById("loadingText").style.display = "block";
+
+    let conf = document.getElementById("conf").value;
+
+    fetch("/start_process?conf="+conf, {method:"POST"})
+    .then(res=>res.json())
+    .then(data=>{
+
+        document.getElementById("loadingSpinner").style.display = "none";
+        document.getElementById("loadingText").style.display = "none";
+
+        document.getElementById("resultImage").src =
+            data.image + "?t=" + new Date().getTime();
+
+        let html = "";
+
+        data.detections.forEach((det, index)=>{
+
+            html += `
+            <div class="result-box">
+
+                <h5 class="text-primary">Detection ${index+1}</h5>
+
+                <b>Bounding Box Pixel:</b><br>
+                Starting Pixel: ${det.bbox_pixel.starting_pixel}<br>
+                Ending Pixel: ${det.bbox_pixel.ending_pixel}<br><br>
+
+                <b>Bounding Box Coordinate (cm):</b><br>
+                Starting Coordinate: ${det.bbox_coordinate_cm.starting_coordinate}<br>
+                Ending Coordinate: ${det.bbox_coordinate_cm.ending_coordinate}<br><br>
+
+                <b>Center Pixel:</b> ${det.center_pixel}<br>
+                <b>Center Coordinate (cm):</b> ${det.center_coordinate_cm}
+
             </div>
             `;
         });

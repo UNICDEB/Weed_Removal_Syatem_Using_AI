@@ -1,0 +1,80 @@
+body {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                        url("/static/background/agri_bg.jpg");
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+.header-bar {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            padding: 15px 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+.system-title {
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+.logo-container img {
+            height: 55px;
+            margin-left: 15px;
+        }
+
+.dashboard-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+.btn-custom {
+            border-radius: 30px;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+.btn-success { background: linear-gradient(45deg,#28a745,#1e7e34); border:none;}
+.btn-primary { background: linear-gradient(45deg,#0d6efd,#084298); border:none;}
+.btn-warning { background: linear-gradient(45deg,#ffc107,#d39e00); border:none;}
+.btn-danger  { background: linear-gradient(45deg,#dc3545,#a71d2a); border:none;}
+
+.btn-custom:hover {
+            transform: scale(1.05);
+        }
+
+#confidenceValue {
+            font-weight: bold;
+            color: #00ffcc;
+        }
+
+#loadingSpinner,
+#loadingText {
+            display: none;
+        }
+
+.result-box {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+footer {
+            margin-top: 40px;
+            padding: 15px;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            font-size: 14px;
+        }
+
+.image-preview {
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }

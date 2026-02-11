@@ -2,119 +2,127 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Weed Detection System</title>
+    <title>Weed Removal AI System</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/style.css" rel="stylesheet">
 
     <style>
-        body {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-                        url("/static/background/agri_bg.jpg");
-            background-size: cover;
-            background-position: center;
-            min-height: 100vh;
-            color: #ffffff;
-        }
+        html, body {
+    height: 100%;
+    margin: 0;
+}
 
-        .header-bar {
-            background: rgba(255,255,255,0.08);
-            backdrop-filter: blur(12px);
-            padding: 15px 30px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
+body {
+    background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
+                url("/static/background/agri_bg.jpg");
+    background-size: cover;
+    background-position: center;
+    font-family: 'Segoe UI', sans-serif;
+    color: #ffffff;
+}
 
-        .system-title {
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
+/* Flex Layout */
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
 
-        .logo-container img {
-            height: 55px;
-            margin-left: 15px;
-        }
+/* Header */
+.header-bar {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    padding: 15px 40px;
+    border-radius: 12px;
+    margin: 20px;
+}
 
-        .dashboard-card {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(15px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-        }
+.logo-container img {
+    height: 55px;
+    margin-left: 15px;
+}
 
-        .btn-custom {
-            border-radius: 30px;
-            font-weight: 500;
-            transition: 0.3s;
-        }
+/* Main Card */
+.dashboard-card {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(18px);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
 
-        .btn-success { background: linear-gradient(45deg,#28a745,#1e7e34); border:none;}
-        .btn-primary { background: linear-gradient(45deg,#0d6efd,#084298); border:none;}
-        .btn-warning { background: linear-gradient(45deg,#ffc107,#d39e00); border:none;}
-        .btn-danger  { background: linear-gradient(45deg,#dc3545,#a71d2a); border:none;}
+/* Buttons */
+.btn-custom {
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
 
-        .btn-custom:hover {
-            transform: scale(1.05);
-        }
+.btn-custom:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
 
-        #confidenceValue {
-            font-weight: bold;
-            color: #00ffcc;
-        }
+/* Confidence */
+.confidence-section select,
+.confidence-section input {
+    border-radius: 10px;
+}
 
-        #loadingSpinner,
-        #loadingText {
-            display: none;
-        }
+/* Result */
+.result-box {
+    background: rgba(255,255,255,0.18);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
 
-        .result-box {
-            background: rgba(255,255,255,0.15);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-        }
+/* Image */
+.image-preview {
+    border-radius: 15px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+}
 
-        footer {
-            margin-top: 40px;
-            padding: 15px;
-            text-align: center;
-            background: rgba(0,0,0,0.7);
-            font-size: 14px;
-        }
+/* Loading */
+#loadingSpinner,
+#loadingText {
+    display: none;
+}
 
-        .image-preview {
-            border-radius: 15px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-        }
+/* Footer Always Bottom */
+footer {
+    margin-top: auto;
+    background: rgba(0,0,0,0.85);
+    padding: 15px;
+    text-align: center;
+}
+
     </style>
 </head>
 
 <body>
 
-<div class="container mt-4">
+<div class="page-wrapper">
 
-    <!-- Header Section -->
+    <!-- Header -->
     <div class="header-bar d-flex justify-content-between align-items-center">
-
         <div>
             <h3 class="system-title">🌿 Weed Removal AI System</h3>
             <small>Real-Time Detection & 3D Coordinate Mapping</small>
         </div>
 
-        <!-- Top Right Logos -->
         <div class="logo-container">
             <img src="/static/logo/meity_logo.png">
             <img src="/static/logo/cdac_logo.png">
         </div>
-
     </div>
 
-    <!-- Main Dashboard -->
-    <div class="dashboard-card">
+    <!-- Main Content -->
+    <div class="container dashboard-card">
 
-        <div class="row mb-4 text-center">
+        <div class="row text-center mb-4">
 
             <div class="col-md-3">
                 <button class="btn btn-success btn-custom w-100" onclick="openCamera()">Open Camera</button>
@@ -134,50 +142,72 @@
 
         </div>
 
-        <!-- Confidence Slider -->
-        <div class="mb-4">
-            <label class="form-label">
-                Confidence Threshold:
-                <span id="confidenceValue">0.5</span>
-            </label>
+        <!-- Confidence Section -->
+        <div class="confidence-section mb-4">
 
-            <input type="range"
-                   min="0.1"
-                   max="1.0"
-                   step="0.05"
-                   value="0.5"
-                   id="conf"
-                   class="form-range"
-                   oninput="updateConfidence(this.value)">
+            <label class="form-label fw-bold">Confidence Threshold</label>
+
+            <div class="d-flex gap-3">
+
+                <!-- Dropdown -->
+                <select id="confDropdown" class="form-select w-50" onchange="syncDropdownToInput()">
+                    <option value="0.1">0.1</option>
+                    <option value="0.2">0.2</option>
+                    <option value="0.3">0.3</option>
+                    <option value="0.4">0.4</option>
+                    <option value="0.5" selected>0.5</option>
+                    <option value="0.6">0.6</option>
+                    <option value="0.7">0.7</option>
+                    <option value="0.8">0.8</option>
+                    <option value="0.9">0.9</option>
+                    <option value="1.0">1.0</option>
+                </select>
+
+                <!-- Manual Input -->
+                <input type="number"
+                       id="confInput"
+                       min="0.1"
+                       max="1.0"
+                       step="0.1"
+                       value="0.5"
+                       class="form-control w-50"
+                       oninput="syncInputToDropdown()">
+            </div>
         </div>
 
         <!-- Loading -->
-        <div class="text-center mb-4">
+        <div class="text-center mb-3">
             <div id="loadingSpinner" class="spinner-border text-light"></div>
-            <div id="loadingText" class="fw-bold">Processing AI Detection...</div>
+            <div id="loadingText">Processing AI Detection...</div>
         </div>
 
         <!-- Result Image -->
         <div class="text-center mb-4">
-            <img id="resultImage" width="750" class="img-fluid image-preview">
+            <img id="resultImage" class="img-fluid image-preview">
         </div>
 
-        <!-- Result Data -->
         <div id="resultData"></div>
 
     </div>
 
-</div>
+    <!-- Footer -->
+    <footer>
+        Developed By: Debabrata Doloi |
+        Centre for Development of Advanced Computing (C-DAC), Kolkata
+    </footer>
 
-<footer>
-    Developed By: C-DAC, Kolkata |
-    Centre for Development of Advanced Computing (C-DAC), Kolkata
-</footer>
+</div>
 
 <script>
 
-function updateConfidence(val){
-    document.getElementById("confidenceValue").innerText = val;
+function syncDropdownToInput(){
+    document.getElementById("confInput").value =
+        document.getElementById("confDropdown").value;
+}
+
+function syncInputToDropdown(){
+    document.getElementById("confDropdown").value =
+        document.getElementById("confInput").value;
 }
 
 function openCamera(){
@@ -186,45 +216,35 @@ function openCamera(){
 
 function startProcess(){
 
-    document.getElementById("loadingSpinner").style.display = "inline-block";
-    document.getElementById("loadingText").style.display = "block";
+    document.getElementById("loadingSpinner").style.display="inline-block";
+    document.getElementById("loadingText").style.display="block";
 
-    let conf = document.getElementById("conf").value;
+    let conf = document.getElementById("confInput").value;
 
     fetch("/start_process?conf="+conf, {method:"POST"})
     .then(res=>res.json())
     .then(data=>{
 
-        document.getElementById("loadingSpinner").style.display = "none";
-        document.getElementById("loadingText").style.display = "none";
+        document.getElementById("loadingSpinner").style.display="none";
+        document.getElementById("loadingText").style.display="none";
 
         document.getElementById("resultImage").src =
             data.image + "?t=" + new Date().getTime();
 
-        let html = "";
-
-        data.detections.forEach((det, index)=>{
-
-            html += `
+        let html="";
+        data.detections.forEach((det,i)=>{
+            html+=`
             <div class="result-box">
-                <h5>Detection ${index+1}</h5>
-
-                <b>Bounding Box Pixel:</b><br>
-                Start: ${det.bbox_pixel.starting_pixel}<br>
-                End: ${det.bbox_pixel.ending_pixel}<br><br>
-
-                <b>Bounding Box Coordinate (cm):</b><br>
-                Start: ${det.bbox_coordinate_cm.starting_coordinate}<br>
-                End: ${det.bbox_coordinate_cm.ending_coordinate}<br><br>
-
-                <b>Center Pixel:</b> ${det.center_pixel}<br>
+                <h5>Detection ${i+1}</h5>
+                <b>Start Pixel:</b> ${det.bbox_pixel.starting_pixel}<br>
+                <b>End Pixel:</b> ${det.bbox_pixel.ending_pixel}<br><br>
+                <b>Start Coordinate (cm):</b> ${det.bbox_coordinate_cm.starting_coordinate}<br>
+                <b>End Coordinate (cm):</b> ${det.bbox_coordinate_cm.ending_coordinate}<br><br>
                 <b>Center Coordinate (cm):</b> ${det.center_coordinate_cm}
-            </div>
-            `;
+            </div>`;
         });
 
-        document.getElementById("resultData").innerHTML = html;
-
+        document.getElementById("resultData").innerHTML=html;
     });
 }
 

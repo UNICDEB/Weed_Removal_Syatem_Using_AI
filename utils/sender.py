@@ -1,6 +1,12 @@
-import requests
+import socket
+import json
 
-def send_to_remote(url, bbox_list, center_list):
+# CHANGE THIS to receiver IP
+RECEIVER_IP = "192.168.1.20"
+PORT = 5000
+
+
+def send_to_remote(bbox_list, center_list):
 
     payload = {
         "bounding_boxes": bbox_list,
@@ -8,7 +14,17 @@ def send_to_remote(url, bbox_list, center_list):
     }
 
     try:
-        response = requests.post(url, json=payload, timeout=5)
-        return response.status_code
-    except:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((RECEIVER_IP, PORT))
+
+        json_data = json.dumps(payload)
+        client.sendall(json_data.encode())
+
+        client.close()
+
+        print("Data sent successfully to receiver.")
+        return "Success"
+
+    except Exception as e:
+        print("Error sending data:", e)
         return "Failed"

@@ -2,7 +2,8 @@ import socket
 import json
 
 # CHANGE THIS to receiver IP
-RECEIVER_IP = "192.168.1.20"
+# RECEIVER_IP = "192.168.1.20"
+RECEIVER_IP = "10.240.10.238"
 PORT = 5000
 
 

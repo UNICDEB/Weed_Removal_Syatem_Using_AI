@@ -128,6 +128,21 @@ def start_process(conf: float = 0.5):
     filename = f"{SAVE_FOLDER}/result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
     cv2.imwrite(filename, annotated)
 
+    # ======================================
+    # ✅ SEND DATA TO RECEIVER (ADD HERE)
+    # ======================================
+    if len(bbox_coordinate_list) > 0:
+        # Extract center list separately
+        center_coordinate_list = [
+            d["center_coordinate_cm"]
+            for d in detection_results
+        ]
+
+        send_to_remote(
+            bbox_coordinate_list,
+            center_coordinate_list
+        )
+
     return {
         "image": filename,
         "detections": detection_results,

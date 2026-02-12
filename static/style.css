@@ -41,6 +41,10 @@ body {
     padding: 40px;
     margin-bottom: 30px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    flex: 1;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Buttons */
@@ -61,24 +65,129 @@ body {
     border-radius: 10px;
 }
 
+.confidence-section {
+    text-align: center;
+}
+
+/* VIDEO FEED SECTION */
+.video-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    max-width: 1280px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+.video-stream {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    background: #000;
+}
+
+/* RESULTS SECTION */
+.results-section {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.result-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-preview {
+    border-radius: 15px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+    max-width: 100%;
+    height: auto;
+    max-height: 600px;
+}
+
+/* SCROLLABLE RESULTS */
+.results-scrollable {
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 15px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.results-scrollable::-webkit-scrollbar {
+    width: 8px;
+}
+
+.results-scrollable::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+}
+
+.results-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(76,175,80,0.7);
+    border-radius: 10px;
+}
+
+.results-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(76,175,80,0.9);
+}
+
 /* Result */
 .result-box {
     background: rgba(255,255,255,0.18);
     padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border-left: 4px solid #4CAF50;
+    transition: all 0.3s ease;
 }
 
-/* Image */
-.image-preview {
-    border-radius: 15px;
-    box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+.result-box:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateX(5px);
+}
+
+.result-box h5 {
+    color: #4CAF50;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.result-box b {
+    color: #FFD700;
 }
 
 /* Loading */
 #loadingSpinner,
 #loadingText {
     display: none;
+    color: #4CAF50;
+}
+
+#loadingSpinner {
+    border-color: rgba(76,175,80,0.3);
+    border-right-color: #4CAF50;
+    margin-bottom: 10px;
+}
+
+#loadingText {
+    font-weight: 600;
+    margin-top: 10px;
 }
 
 /* Footer Always Bottom */
@@ -87,4 +196,91 @@ footer {
     background: rgba(0,0,0,0.85);
     padding: 15px;
     text-align: center;
+    font-size: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-card {
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+
+    .header-bar {
+        padding: 10px 20px;
+        margin: 10px;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .logo-container img {
+        height: 40px;
+        margin-left: 10px;
+    }
+
+    .video-container {
+        max-width: 100%;
+    }
+
+    .results-scrollable {
+        max-height: 350px;
+        padding: 15px;
+    }
+
+    .result-box {
+        padding: 15px;
+        font-size: 14px;
+    }
+
+    .result-box h5 {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-card {
+        padding: 15px;
+    }
+
+    .header-bar {
+        padding: 8px 15px;
+    }
+
+    .confidence-section input {
+        font-size: 14px;
+    }
+
+    .btn-custom {
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+
+    .video-stream {
+        aspect-ratio: 16 / 9;
+    }
+
+    .results-scrollable {
+        max-height: 300px;
+        padding: 12px;
+    }
+
+    .result-box {
+        padding: 12px;
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+
+    .result-box h5 {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .image-preview {
+        max-height: 400px;
+    }
+
+    footer {
+        font-size: 10px;
+        padding: 10px;
+    }
 }

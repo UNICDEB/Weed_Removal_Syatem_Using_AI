@@ -1,9 +1,11 @@
 import os
 import cv2
+import numpy as np
 import threading
+import io
 from datetime import datetime
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from utils.sender import send_to_remote
@@ -23,8 +25,10 @@ camera = RealSenseCamera()
 detector = YOLODetector(MODEL_PATH)
 
 latest_result = {}
+latest_frame = None
 camera_thread = None
 running = False
+frame_lock = threading.Lock()
 
 
 # ===========================
@@ -32,17 +36,37 @@ running = False
 # ===========================
 
 def camera_loop():
-    global running
+    global running, latest_frame
     camera.start()
 
     while running:
         color, depth, _ = camera.get_aligned_frames()
         if color is not None:
-            cv2.imshow("Live RGB 1280x720", color)
-            cv2.waitKey(1)
+            with frame_lock:
+                latest_frame = color.copy()
 
     camera.stop()
-    cv2.destroyAllWindows()
+
+
+def generate_frames():
+    global latest_frame
+    while running:
+        with frame_lock:
+            if latest_frame is not None:
+                frame = latest_frame.copy()
+            else:
+                continue
+        
+        # Encode frame to JPEG
+        ret, buffer = cv2.imencode('.jpg', frame)
+        if ret:
+            frame_bytes = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n'
+                   b'Content-Length: ' + str(len(frame_bytes)).encode() + b'\r\n\r\n'
+                   + frame_bytes + b'\r\n')
+        else:
+            continue
 
 
 # ===========================
@@ -57,16 +81,62 @@ def home(request: Request):
 @app.post("/open_camera")
 def open_camera():
     global running, camera_thread
-    running = True
-    camera_thread = threading.Thread(target=camera_loop)
-    camera_thread.start()
+    if not running:
+        running = True
+        camera_thread = threading.Thread(target=camera_loop, daemon=True)
+        camera_thread.start()
     return {"status": "Camera Opened"}
+
+
+@app.get("/video_feed")
+def video_feed():
+    return StreamingResponse(
+        generate_frames(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+@app.get("/video_frame")
+def video_frame():
+    """Return a single frame as JPEG - 1280x720 optimized for 30 FPS"""
+    global latest_frame
+    
+    if latest_frame is None:
+        # Return a black frame if no frame available
+        blank = np.zeros((720, 1280, 3), dtype=np.uint8)
+        ret, buffer = cv2.imencode('.jpg', blank, [cv2.IMWRITE_JPEG_QUALITY, 45])
+    else:
+        with frame_lock:
+            frame = latest_frame.copy()
+        
+        # Keep full resolution 1280x720 for better quality
+        # Very low quality for maximum speed (30 FPS streaming)
+        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 45])
+    
+    if ret:
+        return StreamingResponse(
+            io.BytesIO(buffer.tobytes()),
+            media_type="image/jpeg",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+    return {"error": "Failed to encode frame"}
 
 
 @app.post("/start_process")
 def start_process(conf: float = 0.5):
+    global latest_frame
 
-    color, depth_image, depth_frame = camera.get_aligned_frames()
+    with frame_lock:
+        if latest_frame is None:
+            return {"error": "No camera frame available"}
+        color = latest_frame.copy()
+
+    # Get depth frame
+    color_check, depth_image, depth_frame = camera.get_aligned_frames()
 
     annotated, boxes = detector.detect(color, conf)
 
@@ -149,6 +219,13 @@ def start_process(conf: float = 0.5):
         "bbox_coordinate_list": bbox_coordinate_list
     }
 
+
+
+@app.post("/close_camera")
+def close_camera():
+    global running
+    running = False
+    return {"status": "Camera Closed"}
 
 
 @app.post("/clear")

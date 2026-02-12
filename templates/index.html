@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weed Removal AI System</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -28,23 +29,23 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container dashboard-card">
+    <div class="container-fluid dashboard-card">
 
         <div class="row text-center mb-4">
 
-            <div class="col-md-3">
-                <button class="btn btn-success btn-custom w-100" onclick="openCamera()">Open Camera</button>
+            <div class="col-md-3 col-sm-6 col-12 mb-2">
+                <button class="btn btn-success btn-custom w-100" id="cameraBtn" onclick="openCamera()">Open Camera</button>
             </div>
 
-            <div class="col-md-3">
-                <button class="btn btn-primary btn-custom w-100" onclick="startProcess()">Start Detection</button>
+            <div class="col-md-3 col-sm-6 col-12 mb-2">
+                <button class="btn btn-primary btn-custom w-100" id="detectionBtn" onclick="startProcess()">Start Detection</button>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-3 col-sm-6 col-12 mb-2">
                 <button class="btn btn-warning btn-custom w-100" onclick="clearData()">Clear</button>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-3 col-sm-6 col-12 mb-2">
                 <button class="btn btn-danger btn-custom w-100" onclick="exitApp()">Exit</button>
             </div>
 
@@ -55,10 +56,7 @@
 
             <label class="form-label fw-bold">Confidence Threshold</label>
 
-            <div class="d-flex gap-3">
-
-                
-
+            <div class="d-flex gap-3 flex-wrap">
                 <!-- Manual Input -->
                 <input type="number"
                        id="confInput"
@@ -71,18 +69,29 @@
             </div>
         </div>
 
+        <!-- Video Feed Section -->
+        <div class="video-section mb-4">
+            <div class="video-container">
+                <canvas id="videoStream" class="video-stream" style="background: #000; display:block; width:100%;"></canvas>
+            </div>
+        </div>
+
         <!-- Loading -->
         <div class="text-center mb-3">
             <div id="loadingSpinner" class="spinner-border text-light"></div>
             <div id="loadingText">Processing AI Detection...</div>
         </div>
 
-        <!-- Result Image -->
-        <div class="text-center mb-4">
-            <img id="resultImage" class="img-fluid image-preview">
-        </div>
+        <!-- Results Section -->
+        <div class="results-section">
+            <!-- Result Image -->
+            <div id="resultImageContainer" class="result-image-container mb-4">
+                <img id="resultImage" class="img-fluid image-preview">
+            </div>
 
-        <div id="resultData"></div>
+            <!-- Scrollable Result Data -->
+            <div class="results-scrollable" id="resultData"></div>
+        </div>
 
     </div>
 
@@ -96,21 +105,106 @@
 
 <script>
 
-function syncDropdownToInput(){
-    document.getElementById("confInput").value =
-        document.getElementById("confDropdown").value;
-}
+var cameraActive = false;
+var streamActive = false;
 
 function syncInputToDropdown(){
-    document.getElementById("confDropdown").value =
-        document.getElementById("confInput").value;
+    // Sync if dropdown exists
+    const dropdown = document.getElementById("confDropdown");
+    if(dropdown) {
+        dropdown.value = document.getElementById("confInput").value;
+    }
+}
+
+var streamRunning = false;
+var frameCount = 0;
+
+function streamFrame() {
+    if(!streamActive) {
+        streamRunning = false;
+        return;
+    }
+    
+    streamRunning = true;
+    
+    fetch("/video_frame?t=" + Date.now())
+        .then(response => response.blob())
+        .then(blob => {
+            if(!streamActive) return;
+            
+            const canvas = document.getElementById("videoStream");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            
+            img.onload = function() {
+                if(!streamActive) return;
+                
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(img.src);
+                frameCount++;
+                
+                // Request next frame immediately after rendering
+                setTimeout(streamFrame, 10);
+            };
+            
+            img.onerror = function() {
+                if(streamActive) {
+                    setTimeout(streamFrame, 10);
+                }
+            };
+            
+            img.src = URL.createObjectURL(blob);
+        })
+        .catch(err => {
+            if(streamActive) {
+                setTimeout(streamFrame, 10);
+            }
+        });
 }
 
 function openCamera(){
-    fetch("/open_camera", {method:"POST"});
+    if(!cameraActive) {
+        fetch("/open_camera", {method:"POST"})
+        .then(res => res.json())
+        .then(data => {
+            cameraActive = true;
+            streamActive = true;
+            // Start streaming frames
+            streamFrame();
+            document.getElementById("cameraBtn").textContent = "Close Camera";
+            document.getElementById("cameraBtn").classList.remove("btn-success");
+            document.getElementById("cameraBtn").classList.add("btn-danger");
+        })
+        .catch(err => alert("Error opening camera: " + err));
+    } else {
+        fetch("/close_camera", {method:"POST"})
+        .then(res => res.json())
+        .then(data => {
+            cameraActive = false;
+            streamActive = false;
+            // Stop video stream
+            const canvas = document.getElementById("videoStream");
+            canvas.width = 1280;
+            canvas.height = 720;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, 1280, 720);
+            
+            document.getElementById("cameraBtn").textContent = "Open Camera";
+            document.getElementById("cameraBtn").classList.remove("btn-danger");
+            document.getElementById("cameraBtn").classList.add("btn-success");
+        })
+        .catch(err => alert("Error closing camera: " + err));
+    }
 }
 
 function startProcess(){
+    if(!cameraActive) {
+        alert("Please open camera first!");
+        return;
+    }
 
     document.getElementById("loadingSpinner").style.display="inline-block";
     document.getElementById("loadingText").style.display="block";
@@ -124,23 +218,37 @@ function startProcess(){
         document.getElementById("loadingSpinner").style.display="none";
         document.getElementById("loadingText").style.display="none";
 
+        if(data.error) {
+            alert(data.error);
+            return;
+        }
+
         document.getElementById("resultImage").src =
             data.image + "?t=" + new Date().getTime();
 
         let html="";
-        data.detections.forEach((det,i)=>{
-            html+=`
-            <div class="result-box">
-                <h5>Detection ${i+1}</h5>
-                <b>Start Pixel:</b> ${det.bbox_pixel.starting_pixel}<br>
-                <b>End Pixel:</b> ${det.bbox_pixel.ending_pixel}<br><br>
-                <b>Start Coordinate (cm):</b> ${det.bbox_coordinate_cm.starting_coordinate}<br>
-                <b>End Coordinate (cm):</b> ${det.bbox_coordinate_cm.ending_coordinate}<br><br>
-                <b>Center Coordinate (cm):</b> ${det.center_coordinate_cm}
-            </div>`;
-        });
+        if(data.detections && data.detections.length > 0) {
+            data.detections.forEach((det,i)=>{
+                html+=`
+                <div class="result-box">
+                    <h5>Detection ${i+1}</h5>
+                    <b>Start Pixel:</b> (${det.bbox_pixel.starting_pixel[0]}, ${det.bbox_pixel.starting_pixel[1]})<br>
+                    <b>End Pixel:</b> (${det.bbox_pixel.ending_pixel[0]}, ${det.bbox_pixel.ending_pixel[1]})<br><br>
+                    <b>Start Coordinate (cm):</b> (${det.bbox_coordinate_cm.starting_coordinate[0]}, ${det.bbox_coordinate_cm.starting_coordinate[1]}, ${det.bbox_coordinate_cm.starting_coordinate[2]})<br>
+                    <b>End Coordinate (cm):</b> (${det.bbox_coordinate_cm.ending_coordinate[0]}, ${det.bbox_coordinate_cm.ending_coordinate[1]}, ${det.bbox_coordinate_cm.ending_coordinate[2]})<br><br>
+                    <b>Center Coordinate (cm):</b> (${det.center_coordinate_cm[0]}, ${det.center_coordinate_cm[1]}, ${det.center_coordinate_cm[2]})
+                </div>`;
+            });
+        } else {
+            html = '<div class="result-box">No weeds detected!</div>';
+        }
 
         document.getElementById("resultData").innerHTML=html;
+    })
+    .catch(err => {
+        document.getElementById("loadingSpinner").style.display="none";
+        document.getElementById("loadingText").style.display="none";
+        alert("Error during detection: " + err);
     });
 }
 
@@ -151,7 +259,11 @@ function clearData(){
 }
 
 function exitApp(){
-    fetch("/exit", {method:"POST"});
+    fetch("/exit", {method:"POST"})
+    .then(res => res.json())
+    .then(data => {
+        alert("Application closed!");
+    });
 }
 
 </script>

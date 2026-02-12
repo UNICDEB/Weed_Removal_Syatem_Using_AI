@@ -97,6 +97,24 @@ body {
     background: #000;
 }
 
+.video-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    color: #fff;
+}
+
+.placeholder-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #4CAF50;
+    text-align: center;
+    margin: 0;
+}
+
 /* RESULTS SECTION */
 .results-section {
     display: flex;
@@ -235,6 +253,10 @@ footer {
     .result-box h5 {
         font-size: 16px;
     }
+
+    .placeholder-text {
+        font-size: 16px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -282,5 +304,9 @@ footer {
     footer {
         font-size: 10px;
         padding: 10px;
+    }
+
+    .placeholder-text {
+        font-size: 14px;
     }
 }

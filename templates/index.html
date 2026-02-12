@@ -73,6 +73,9 @@
         <div class="video-section mb-4">
             <div class="video-container">
                 <canvas id="videoStream" class="video-stream" style="background: #000; display:block; width:100%;"></canvas>
+                <div id="videoPlaceholder" class="video-placeholder">
+                    <p class="placeholder-text">📹 Click "Open Camera" to start live feed</p>
+                </div>
             </div>
         </div>
 
@@ -107,6 +110,12 @@
 
 var cameraActive = false;
 var streamActive = false;
+
+// Initialize: Hide canvas, show placeholder on page load
+window.addEventListener('DOMContentLoaded', function() {
+    document.getElementById("videoStream").style.display = "none";
+    document.getElementById("videoPlaceholder").style.display = "flex";
+});
 
 function syncInputToDropdown(){
     // Sync if dropdown exists
@@ -209,6 +218,19 @@ function openCamera(){
         .then(data => {
             cameraActive = true;
             streamActive = true;
+            
+            // Hide placeholder, show canvas
+            document.getElementById("videoPlaceholder").style.display = "none";
+            document.getElementById("videoStream").style.display = "block";
+            
+            // Initialize canvas
+            const canvas = document.getElementById("videoStream");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 1280;
+            canvas.height = 720;
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, 1280, 720);
+            
             // Start streaming frames
             streamFrame();
             document.getElementById("cameraBtn").textContent = "Close Camera";
@@ -222,13 +244,18 @@ function openCamera(){
         .then(data => {
             cameraActive = false;
             streamActive = false;
-            // Stop video stream
+            
+            // Clear canvas
             const canvas = document.getElementById("videoStream");
             canvas.width = 1280;
             canvas.height = 720;
             const ctx = canvas.getContext("2d");
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, 1280, 720);
+            
+            // Show placeholder
+            document.getElementById("videoPlaceholder").style.display = "flex";
+            document.getElementById("videoStream").style.display = "none";
             
             document.getElementById("cameraBtn").textContent = "Open Camera";
             document.getElementById("cameraBtn").classList.remove("btn-danger");

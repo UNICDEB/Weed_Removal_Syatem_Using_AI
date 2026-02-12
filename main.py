@@ -29,6 +29,8 @@ latest_frame = None
 camera_thread = None
 running = False
 frame_lock = threading.Lock()
+last_encoded_frame = None
+last_encoded_time = 0
 
 
 # ===========================
@@ -38,12 +40,16 @@ frame_lock = threading.Lock()
 def camera_loop():
     global running, latest_frame
     camera.start()
+    frame_count = 0
 
     while running:
         color, depth, _ = camera.get_aligned_frames()
         if color is not None:
-            with frame_lock:
-                latest_frame = color.copy()
+            frame_count += 1
+            # Only update frame every other iteration to reduce encoding load
+            if frame_count % 1 == 0:
+                with frame_lock:
+                    latest_frame = color.copy()
 
     camera.stop()
 
@@ -98,20 +104,24 @@ def video_feed():
 
 @app.get("/video_frame")
 def video_frame():
-    """Return a single frame as JPEG - 1280x720 optimized for 30 FPS"""
+    """Return a single frame as JPEG - ultra-fast 1280x720 streaming"""
     global latest_frame
     
     if latest_frame is None:
-        # Return a black frame if no frame available
         blank = np.zeros((720, 1280, 3), dtype=np.uint8)
-        ret, buffer = cv2.imencode('.jpg', blank, [cv2.IMWRITE_JPEG_QUALITY, 45])
+        ret, buffer = cv2.imencode('.jpg', blank, [
+            cv2.IMWRITE_JPEG_QUALITY, 20,
+            cv2.IMWRITE_JPEG_OPTIMIZE, 1
+        ])
     else:
         with frame_lock:
             frame = latest_frame.copy()
         
-        # Keep full resolution 1280x720 for better quality
-        # Very low quality for maximum speed (30 FPS streaming)
-        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 45])
+        # Ultra-aggressive compression for 30 FPS @ 1280x720
+        ret, buffer = cv2.imencode('.jpg', frame, [
+            cv2.IMWRITE_JPEG_QUALITY, 20,  # Minimum quality
+            cv2.IMWRITE_JPEG_OPTIMIZE, 1   # Optimize JPEG structure
+        ])
     
     if ret:
         return StreamingResponse(
@@ -120,7 +130,8 @@ def video_frame():
             headers={
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
-                "Expires": "0"
+                "Expires": "0",
+                "Connection": "close"
             }
         )
     return {"error": "Failed to encode frame"}

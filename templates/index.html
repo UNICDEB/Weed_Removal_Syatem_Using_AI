@@ -118,6 +118,9 @@ function syncInputToDropdown(){
 
 var streamRunning = false;
 var frameCount = 0;
+var fpsCounter = 0;
+var lastFpsTime = Date.now();
+var pendingFrame = false;
 
 function streamFrame() {
     if(!streamActive) {
@@ -125,41 +128,76 @@ function streamFrame() {
         return;
     }
     
-    streamRunning = true;
+    // Skip if previous frame is still loading
+    if(pendingFrame) {
+        setTimeout(streamFrame, 2);
+        return;
+    }
     
-    fetch("/video_frame?t=" + Date.now())
-        .then(response => response.blob())
+    streamRunning = true;
+    pendingFrame = true;
+    
+    fetch("/video_frame?t=" + Date.now(), {
+        cache: 'no-store',
+        mode: 'cors'
+    })
+        .then(response => {
+            if(response.status === 200) {
+                return response.blob();
+            }
+            throw new Error('HTTP ' + response.status);
+        })
         .then(blob => {
-            if(!streamActive) return;
+            if(!streamActive) {
+                pendingFrame = false;
+                return;
+            }
             
             const canvas = document.getElementById("videoStream");
             const ctx = canvas.getContext("2d");
             const img = new Image();
             
             img.onload = function() {
-                if(!streamActive) return;
+                if(!streamActive) {
+                    pendingFrame = false;
+                    return;
+                }
                 
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 URL.revokeObjectURL(img.src);
                 frameCount++;
+                fpsCounter++;
                 
-                // Request next frame immediately after rendering
-                setTimeout(streamFrame, 10);
+                // Track FPS every second
+                const now = Date.now();
+                if(now - lastFpsTime >= 1000) {
+                    console.log("FPS: " + fpsCounter);
+                    fpsCounter = 0;
+                    lastFpsTime = now;
+                }
+                
+                pendingFrame = false;
+                // Request next frame with zero delay
+                requestAnimationFrame(streamFrame);
             };
             
             img.onerror = function() {
+                URL.revokeObjectURL(img.src);
+                pendingFrame = false;
                 if(streamActive) {
-                    setTimeout(streamFrame, 10);
+                    setTimeout(streamFrame, 5);
                 }
             };
             
             img.src = URL.createObjectURL(blob);
         })
         .catch(err => {
+            pendingFrame = false;
             if(streamActive) {
-                setTimeout(streamFrame, 10);
+                console.log("Stream error: " + err.message);
+                setTimeout(streamFrame, 5);
             }
         });
 }

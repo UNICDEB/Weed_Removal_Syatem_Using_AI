@@ -129,7 +129,7 @@ def start_process(conf: float = 0.5):
     cv2.imwrite(filename, annotated)
 
     # ======================================
-    # ✅ SEND DATA TO RECEIVER (ADD HERE)
+    # SEND DATA TO RECEIVER (ADD HERE)
     # ======================================
     if len(bbox_coordinate_list) > 0:
         # Extract center list separately
